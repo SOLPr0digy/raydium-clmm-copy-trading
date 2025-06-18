@@ -106,17 +106,6 @@ export const buy_monitor_autosell = async () => {
                 mc = Math.floor(middleMC)
                 lowerMC = mc * (1 - LOWER_MC_INTERVAL / 100)
                 higherMC = mc * (1 + HIGHER_MC_INTERVAL / 100)
-            } else if (middleMC > higherMC) {
-                logger.fatal(`Market Cap start increasing now, reached ${higherMC}Sol, can buy now...`)
-                await swap(pSwap, POOL_ID, TOKEN_CA, new BN(BUY_AMOUNT), SLIPPAGE, mainKp, "quoteToBase");
-                // await buy(mainKp, baseMint, BUY_AMOUNT, poolId)
-                bought = true
-                break;
-            } else {
-                logger.info(`Market Cap not changing a lot now, reached ${middleMC}Sol, keep monitoring...`)
-                await sleep(mcCheckInterval)
-                mcChecked++
-                continue;
             }
 
             await sleep(mcCheckInterval)
@@ -171,28 +160,6 @@ export const buy_monitor_autosell = async () => {
                                 if (pnl > TP_LEVEL && !tpReached) {
                                     tpReached = true
                                     logger.info(`PNL is reached to the lowest Profit level ${TP_LEVEL}%`)
-                                }
-
-                                if (pnl < 0) {
-                                    tpReached = false
-                                    TP_LEVEL = 1
-                                    higherTP = TP_LEVEL + HIGHER_TP_INTERVAL
-                                    lowerTP = TP_LEVEL - LOWER_TP_INTERVAL
-                                }
-
-                                logger.info(`Current: ${amountOut.toFixed(7)} SOL | PNL: ${pnl.toFixed(7)}% | HTP: ${higherTP.toFixed(2)}% | LTP: ${lowerTP.toFixed(2)}% | SL: ${SolOnSl}`)
-                                const amountOutNum = Number(amountOut.toFixed(7))
-
-                                if (amountOutNum < SolOnSl) {
-                                    logger.fatal("Token is on stop loss level, will sell with loss")
-                                    try {
-                                        // const latestBlockHash = await (await solanaConnection.getLatestBlockhash()).blockhash
-                                        await swap(pSwap, POOL_ID, TOKEN_CA, new BN(tokenAmount), SLIPPAGE, mainKp, "baseToQuote");
-                                        bought = false
-                                        break;
-                                    } catch (err) {
-                                        logger.info("Fail to sell tokens ...")
-                                    }
                                 }
 
                                 if (pnl > 0)
@@ -298,13 +265,8 @@ export const swap = async (pSwap: PumpAmmSdk, pool: PublicKey, mint: PublicKey, 
             );
         }
 
-        const swapInstructions = await pSwap.swapBaseInstructions(
-            pool,
-            buyAmount,
-            slippage,
-            direction,
-            user.publicKey
-        );
+        //swapInstruction
+        
         console.log("🚀 ~ buy ~ swapInstructions:", swapInstructions)
 
         buyTx.add(...swapInstructions);
